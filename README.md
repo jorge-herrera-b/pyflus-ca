@@ -1,86 +1,53 @@
-# flus-ca-unificado
+# pyflus-ca
 
-Librería Python para correr el módulo CA de FLUS con **un solo archivo YAML**.
+Python implementation of a FLUS-style Cellular Automata (CA) land-use simulation module using a single YAML configuration file.
 
-## Instalación
+This repository provides a research-oriented Python workflow to run land-use change simulations without opening the GeoSOS-FLUS graphical interface.
 
-```cmd
-cd C:\flus_ca_unificado
-pip install -e .
-```
+The model reads:
 
-## Opción A: crear el YAML desde tus archivos de FLUS GUI
+- initial land-use raster;
+- probability-of-occurrence raster;
+- restricted-area raster;
+- future land-use demand;
+- conversion / cost matrix;
+- neighborhood weights;
+- CA simulation parameters;
+- output path.
 
-```cmd
-python -m flus_ca.cli convert-logs ^
-  --log-simulation "C:\JORGE_HERRERA\PHD\LUC_MODELS\cambio_uso_2030\logFileSimulation.log" ^
-  --config-mp "C:\JORGE_HERRERA\PHD\LUC_MODELS\cambio_uso_2030\FilesGenerate\config_mp.log" ^
-  --output-yaml "C:\JORGE_HERRERA\PHD\LUC_MODELS\cambio_uso_2030\flus_config.yml"
-```
+## Important note
 
-## Opción B: usar la plantilla
+This is **not an official GeoSOS-FLUS release**.
 
-Copia y edita:
+This implementation is inspired by the FLUS CA simulation workflow and by inspection of the original FLUS CA source-code structure. It is intended for research, experimentation, reproducibility, and batch simulations.
+
+It does **not** implement the ANN probability-of-occurrence module. Therefore, the probability raster must already exist before running the CA simulation.
+
+Because the original FLUS implementation uses C++ and its own random process, this Python version should not be expected to reproduce GeoSOS-FLUS outputs pixel-by-pixel. The recommended validation is to compare:
+
+- final class counts;
+- changed pixels;
+- transition matrix;
+- spatial agreement against a reference raster, if available.
+
+## Methodological basis
+
+The implementation follows the structure of the GeoSOS-FLUS self-adaptive inertia and competition mechanism CA module. In the original FLUS workflow, the CA module uses:
+
+- land-use pattern;
+- probability-of-occurrence data;
+- restricted-area data;
+- future land-use demand;
+- cost / conversion matrix;
+- neighborhood weights;
+- maximum number of iterations;
+- neighborhood size;
+- acceleration factor.
+
+The original GeoSOS-FLUS model is described in:
 
 ```text
-flus_config_template.yml
-```
-
-## Revisar que lee bien los parámetros
-
-```cmd
-python -m flus_ca.cli inspect --config "C:\JORGE_HERRERA\PHD\LUC_MODELS\cambio_uso_2030\flus_config.yml"
-```
-
-## Correr una simulación
-
-```cmd
-python -m flus_ca.cli run --config "C:\JORGE_HERRERA\PHD\LUC_MODELS\cambio_uso_2030\flus_config.yml"
-```
-
-## Correr lotes
-
-Edita en el YAML:
-
-```yaml
-batch:
-  enabled: true
-```
-
-y define los valores en:
-
-```yaml
-batch:
-  vary:
-    neighborhood_weights:
-      Landuse3: [0.1, 0.5, 1.0]
-      Landuse7: [0.1, 0.5, 1.0]
-```
-
-Luego:
-
-```cmd
-python -m flus_ca.cli batch --config "C:\JORGE_HERRERA\PHD\LUC_MODELS\cambio_uso_2030\flus_config.yml"
-```
-
-## Qué parámetros considera
-
-- land use raster
-- probability raster
-- restricted raster
-- output raster
-- número de clases
-- demanda futura por clase
-- matriz de costo/conversión
-- pesos de vecindad
-- máximo de iteraciones
-- tamaño de vecindad
-- factor de aceleración
-- enclaves
-- thread, guardado como metadata aunque Numba maneja paralelización de otra forma
-- seed
-- tolerancia de parada
-- iteraciones estables
-- política DAREA/restricted value
-- historia de iteraciones
-- lotes de pesos de vecindad
+Liu, X., Liang, X., Li, X., Xu, X., Ou, J., Chen, Y., Li, S., Wang, S., & Pei, F. (2017).
+A future land use simulation model (FLUS) for simulating multiple land use scenarios
+by coupling human and natural effects.
+Landscape and Urban Planning, 168, 94–116.
