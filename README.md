@@ -5,7 +5,7 @@ Librería Python para correr el módulo CA de FLUS con **un solo archivo YAML**.
 ## Instalación
 
 ```cmd
-cd C:\JORGE_HERRERA\PHD\LUC_MODELS\cambio_uso_2030\flus_ca_unificado
+cd C:\flus_ca_unificado
 pip install -e .
 ```
 
