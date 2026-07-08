@@ -61,6 +61,14 @@ Herrera-Benavides, J., Galleguillos, M., & O’Ryan, R. (2026). A spatial simula
 
 This project is licensed under the MIT License.
 
-Copyright (c) 2026 Jorge Herrera.
+Copyright (c) 2026 Jorge Herrera-Benavides.
 
 You are free to use, copy, modify, and distribute this software, provided that the original copyright notice and license are included.
+
+## How to cite
+
+If you use this repository, please cite it as:
+
+Herrera-Benavides, J. (2026). *pyflus-ca: A Python implementation of a FLUS-style cellular automata module for land-use change simulation* (Version 0.2.0) [Computer software]. GitHub. https://github.com/jorge-herrera-b/pyflus-ca
+
+A machine-readable citation file is also provided in `CITATION.cff`.
