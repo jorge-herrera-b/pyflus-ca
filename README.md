@@ -51,7 +51,8 @@ Liu, X., Liang, X., Li, X., Xu, X., Ou, J., Chen, Y., Li, S., Wang, S., & Pei, F
 A future land use simulation model (FLUS) for simulating multiple land use scenarios
 by coupling human and natural effects.
 Landscape and Urban Planning, 168, 94–116.
-
+```
 Furthermore, this Python implementation was used for the following publication:
 ```text
 Herrera-Benavides, J., Galleguillos, M., & O’Ryan, R. (2026). A spatial simulation framework for afforestation policy assessment in Chile: accounting for uncertainty in projected land-use change and hydrological risk. Research Square. https://doi.org/10.21203/rs.3.rs-9520764/v1
+```
