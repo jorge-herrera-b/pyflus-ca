@@ -1,6 +1,6 @@
 # pyflus-ca
 
-Python implementation of a FLUS-style Cellular Automata (CA) land-use simulation module using a single YAML configuration file.
+Python implementation of the cellular automata (CA)-based self-adaptive inertia and competition mechanism module of the land-use simulation model (FLUS; Liu et al., 2017): a model for future land-use allocation. The source code is available at: https://geosimulation.cn/FLUS-source-code.html
 
 This repository provides a research-oriented Python workflow to run land-use change simulations without opening the GeoSOS-FLUS graphical interface.
 
