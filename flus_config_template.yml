@@ -1,0 +1,81 @@
+# Archivo único de configuración para el módulo CA de FLUS
+# Edita las rutas y parámetros según tu caso.
+
+rasters:
+  landuse: "C:/JORGE_HERRERA/PHD/LUC_MODELS/cambio_uso_2030/input_flus/LC_2018_ND.tif"
+  probability: "C:/JORGE_HERRERA/PHD/LUC_MODELS/cambio_uso_2030/input_flus/output_prob.tif"
+  restricted: "C:/JORGE_HERRERA/PHD/LUC_MODELS/cambio_uso_2030/input_flus/potencial_2_nieve.tif"
+  output: "C:/JORGE_HERRERA/PHD/LUC_MODELS/cambio_uso_2030/simulaciones_python/sim_test.tif"
+
+classes:
+  n_types: 10
+  codes: [1,2,3,4,5,6,7,8,9,10]
+  names:
+    - Landuse1
+    - Landuse2
+    - Landuse3
+    - Landuse4
+    - Landuse5
+    - Landuse6
+    - Landuse7
+    - Landuse8
+    - Landuse9
+    - Landuse10
+
+simulation:
+  future_pixels:
+    - 475690
+    - 1821742
+    - 5774667
+    - 1843641
+    - 537343
+    - 115169
+    - 3419315
+    - 3370565
+    - 685826
+    - 135937
+
+  cost_matrix:
+    - [1,1,0,0,0,1,0,0,0,0]
+    - [1,1,0,0,0,1,0,0,0,1]
+    - [0,0,1,0,0,0,0,0,0,0]
+    - [0,0,0,1,0,0,0,0,0,0]
+    - [0,1,0,1,1,0,0,0,0,1]
+    - [1,0,1,0,0,1,1,0,0,0]
+    - [0,1,1,1,1,0,1,1,1,1]
+    - [0,1,1,1,1,0,0,1,1,1]
+    - [0,1,1,1,1,1,0,0,1,1]
+    - [0,0,0,0,0,0,0,0,0,1]
+
+  neighborhood_weights: [0.5,0.5,1,0.5,0.5,0.5,0.5,0.5,0.5,0.5]
+
+  max_iterations: 3
+  neighborhood_size: 5
+  acceleration: 2
+  enclaves_for_landuse_type: 1
+  thread: 16
+
+hyperparameters:
+  seed: 123
+  stop_tolerance_fraction: 0.0001
+  stable_iterations: 5
+
+  # Política especial del código FLUS cuando el raster restricted contiene valor 2.
+  # Si no la usas, poner enabled: false.
+  darea:
+    enabled: true
+    restricted_value: 2
+    target_class: 2
+
+  save_history_csv: "C:/JORGE_HERRERA/PHD/LUC_MODELS/cambio_uso_2030/simulaciones_python/hist_test.csv"
+
+batch:
+  enabled: false
+  output_dir: "C:/JORGE_HERRERA/PHD/LUC_MODELS/cambio_uso_2030/simulaciones_python/lotes"
+
+  # Ejemplo para calibrar pesos de vecindad:
+  vary:
+    neighborhood_weights:
+      Landuse3: [0.1, 0.5, 1.0]
+      Landuse7: [0.1, 0.5, 1.0]
+      Landuse8: [0.1, 0.5, 1.0]

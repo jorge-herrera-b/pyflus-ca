@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Environments
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# Spyder / IDE
+.spyderproject
+.spyproject
+.vscode/
+.idea/
+
+# Raster pesados
+*.tif
+*.tiff
+*.img
+*.vrt
+*.aux.xml
+
+# Salidas
+*.csv
+*.log
+
+# Configuraciones locales
+flus_config.yml
+local_config.yml
+
+# Windows
+Thumbs.db
+Desktop.ini

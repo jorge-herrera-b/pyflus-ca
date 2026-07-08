@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flus-ca-unificado"
+version = "0.2.0"
+description = "Modulo CA de FLUS en Python usando un archivo YAML unico de configuracion"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "rasterio",
+    "numba",
+    "pandas",
+    "pyyaml"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["flus_ca*"]
