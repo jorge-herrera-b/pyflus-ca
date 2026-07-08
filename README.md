@@ -56,3 +56,11 @@ Furthermore, this Python implementation was used for the following publication:
 ```text
 Herrera-Benavides, J., Galleguillos, M., & O’Ryan, R. (2026). A spatial simulation framework for afforestation policy assessment in Chile: accounting for uncertainty in projected land-use change and hydrological risk. Research Square. https://doi.org/10.21203/rs.3.rs-9520764/v1
 ```
+
+## License
+
+This project is licensed under the MIT License.
+
+Copyright (c) 2026 Jorge Herrera.
+
+You are free to use, copy, modify, and distribute this software, provided that the original copyright notice and license are included.
