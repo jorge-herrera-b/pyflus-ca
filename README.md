@@ -69,6 +69,6 @@ You are free to use, copy, modify, and distribute this software, provided that t
 
 If you use this repository, please cite it as:
 
-Herrera-Benavides, J. (2026). *pyflus-ca: A Python implementation of a FLUS-style cellular automata module for land-use change simulation* (Version 0.2.0) [Computer software]. GitHub. https://github.com/jorge-herrera-b/pyflus-ca
+Herrera-Benavides, J. (2026). *pyflus-ca: A Python implementation of a FLUS-CA module for land-use change simulation* (Version 0.2.0) [Computer software]. GitHub. https://github.com/jorge-herrera-b/pyflus-ca
 
 A machine-readable citation file is also provided in `CITATION.cff`.
