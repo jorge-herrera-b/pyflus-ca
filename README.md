@@ -70,7 +70,7 @@ Each period starts from the land-use map generated in the previous period, while
 
 ## DAREA
 
-The reviewed `FLUS_console.vcxproj` project does not define the `DAREA` macro. Therefore, the default configuration is:
+DAREA is disabled by default:
 
 ```yaml
 hyperparameters:
