@@ -1,2 +1,0 @@
-[console_scripts]
-flus-ca = flus_ca.cli:main
