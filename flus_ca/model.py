@@ -9,10 +9,10 @@ import copy
 import numpy as np
 import rasterio
 
-from .config import load_config
+from .config import load_config, _validate_config
 
 try:
-    from numba import njit
+    from numba import njit, set_num_threads
     NUMBA_OK = True
 except Exception:
     NUMBA_OK = False
@@ -311,13 +311,8 @@ if NUMBA_OK:
             if sum_dis == 0:
                 break
 
-            if k > stable_iterations and sum_dis < pixel_sum * stop_tolerance_fraction:
-                break
-
             if sum_dis == history_dis:
                 statistic_history_dis += 1
-            else:
-                statistic_history_dis = 0
 
             if statistic_history_dis > stable_iterations and sum_dis < pixel_sum * stop_tolerance_fraction:
                 break
@@ -337,6 +332,7 @@ class FLUSCA:
     def __init__(self, config_path: str | Path | dict):
         if isinstance(config_path, dict):
             self.cfg = config_path
+            _validate_config(self.cfg)
         else:
             self.cfg = load_config(config_path)
 
@@ -348,6 +344,7 @@ class FLUSCA:
         self.counts = None
         self.history = None
         self.sumdiff_history = None
+        self.period_history = None
 
     def inspect(self) -> dict:
         return {
@@ -384,6 +381,32 @@ class FLUSCA:
         if self.restricted.shape != self.landuse.shape:
             raise ValueError("El raster restricted y landuse no tienen la misma dimensión.")
 
+        # FLUS supone que las bandas/celdas representan exactamente la misma grilla.
+        reference = self.profile
+        check_paths = [("probability", rasters["probability"])]
+        if rasters.get("restricted"):
+            check_paths.append(("restricted", rasters["restricted"]))
+        for label, path in check_paths:
+            with rasterio.open(path) as src:
+                if src.crs != reference["crs"]:
+                    raise ValueError(f"CRS diferente en {label}: {src.crs} != {reference['crs']}")
+                if not src.transform.almost_equals(reference["transform"]):
+                    raise ValueError(f"Transformación/grilla diferente en {label}.")
+                if src.width != reference["width"] or src.height != reference["height"]:
+                    raise ValueError(f"Dimensiones diferentes en {label}.")
+                if label == "probability" and src.count != n_types:
+                    raise ValueError(
+                        f"El raster de probabilidades debe tener exactamente {n_types} bandas; tiene {src.count}."
+                    )
+
+        valid_land = self.landuse[(self.landuse > 0)]
+        if valid_land.size and int(valid_land.max()) > n_types:
+            raise ValueError("El mapa de uso de suelo contiene códigos mayores que classes.n_types.")
+        if np.isinf(self.probability).any():
+            raise ValueError("El raster de probabilidades contiene valores infinitos.")
+        if (self.probability < 0).any():
+            raise ValueError("El raster de probabilidades contiene valores negativos.")
+
         return self
 
     def run(self, seed: Optional[int] = None, verbose: bool = True):
@@ -399,33 +422,65 @@ class FLUSCA:
         if verbose:
             self.print_inspect()
 
-        result, counts, history, sumdiff_history = _run_ca(
-            self.landuse,
-            self.probability,
-            self.restricted,
-            np.asarray(sim["future_pixels"], dtype=np.int64),
-            np.asarray(sim["cost_matrix"], dtype=np.float64),
-            np.asarray(sim["neighborhood_weights"], dtype=np.float64),
-            int(sim["max_iterations"]),
-            int(sim["neighborhood_size"]),
-            float(sim["acceleration"]),
-            seed,
-            float(hyp.get("stop_tolerance_fraction", 0.0001)),
-            int(hyp.get("stable_iterations", 5)),
-            bool(darea.get("enabled", True)),
-            int(darea.get("restricted_value", 2)),
-            int(darea.get("target_class", 2)),
-        )
+        thread_count = int(sim.get("thread", 1) or 1)
+        if NUMBA_OK:
+            set_num_threads(max(1, thread_count))
+
+        # Una lista future_pixels reproduce el modo de demanda final única.
+        # demand_schedule permite varios horizontes consecutivos y reinicia la
+        # inercia en cada período, como hace FLUS al cambiar de año objetivo.
+        schedule = sim.get("demand_schedule")
+        if schedule:
+            periods = [(str(item["period"]), np.asarray(item["future_pixels"], dtype=np.int64)) for item in schedule]
+        else:
+            periods = [("final", np.asarray(sim["future_pixels"], dtype=np.int64))]
+
+        current_land = self.landuse.copy()
+        histories = []
+        differences = []
+        period_labels = []
+        counts = None
+        for period_index, (period, demand) in enumerate(periods):
+            if (demand < 0).any():
+                raise ValueError(f"La demanda del período {period} contiene valores negativos.")
+            valid_pixels = int(np.count_nonzero((current_land >= 1) & (current_land <= len(demand))))
+            if int(demand.sum()) != valid_pixels:
+                raise ValueError(
+                    f"La demanda del período {period} suma {int(demand.sum())}, "
+                    f"pero el mapa contiene {valid_pixels} píxeles válidos."
+                )
+            result, counts, history, sumdiff_history = _run_ca(
+                current_land,
+                self.probability,
+                self.restricted,
+                demand,
+                np.asarray(sim["cost_matrix"], dtype=np.float64),
+                np.asarray(sim["neighborhood_weights"], dtype=np.float64),
+                int(sim["max_iterations"]),
+                int(sim["neighborhood_size"]),
+                float(sim["acceleration"]),
+                seed + period_index,
+                float(hyp.get("stop_tolerance_fraction", 0.0001)),
+                int(hyp.get("stable_iterations", 5)),
+                bool(darea.get("enabled", False)),
+                int(darea.get("restricted_value", 2)),
+                int(darea.get("target_class", 2)),
+            )
+            current_land = result
+            histories.append(history)
+            differences.append(sumdiff_history)
+            period_labels.extend([period] * len(history))
 
         self.result = result
         self.counts = counts
-        self.history = history
-        self.sumdiff_history = sumdiff_history
+        self.history = np.concatenate(histories, axis=0) if histories else np.empty((0, len(counts)))
+        self.sumdiff_history = np.concatenate(differences) if differences else np.empty(0)
+        self.period_history = period_labels
 
         if verbose:
-            print("iteraciones:", len(history))
+            print("iteraciones:", len(self.history))
             print("conteos_finales:", counts.tolist())
-            print("diferencia_final:", int(sumdiff_history[-1]) if len(sumdiff_history) else None)
+            print("diferencia_final:", int(self.sumdiff_history[-1]) if len(self.sumdiff_history) else None)
 
         return self
 
@@ -459,6 +514,8 @@ class FLUSCA:
         cols = [f"Landuse{i+1}" for i in range(int(self.cfg["classes"]["n_types"]))]
         df = pd.DataFrame(self.history, columns=cols)
         df.insert(0, "iteration", np.arange(1, len(df) + 1))
+        if self.period_history is not None:
+            df.insert(1, "period", self.period_history)
         df["sum_abs_diff"] = self.sumdiff_history
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(path, index=False)

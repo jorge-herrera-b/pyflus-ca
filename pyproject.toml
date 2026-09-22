@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flus-ca-unificado"
-version = "0.2.0"
+version = "0.3.0"
 description = "Modulo CA de FLUS en Python usando un archivo YAML unico de configuracion"
 requires-python = ">=3.9"
 dependencies = [
@@ -14,6 +14,12 @@ dependencies = [
     "pandas",
     "pyyaml"
 ]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+flus-ca = "flus_ca.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

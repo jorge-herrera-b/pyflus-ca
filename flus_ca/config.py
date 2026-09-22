@@ -62,6 +62,9 @@ def _validate_config(cfg: dict[str, Any]) -> None:
             raise ValueError(f"Falta simulation.{key}")
 
     n_types = int(cfg["classes"]["n_types"])
+    codes = cfg["classes"].get("codes", list(range(1, n_types + 1)))
+    if codes != list(range(1, n_types + 1)):
+        raise ValueError("Esta implementación FLUS requiere códigos contiguos 1..n_types.")
     if len(sim["future_pixels"]) != n_types:
         raise ValueError("simulation.future_pixels debe tener largo igual a classes.n_types")
     if len(sim["neighborhood_weights"]) != n_types:
@@ -71,6 +74,23 @@ def _validate_config(cfg: dict[str, Any]) -> None:
     for row in sim["cost_matrix"]:
         if len(row) != n_types:
             raise ValueError("Cada fila de simulation.cost_matrix debe tener n_types columnas")
+        if any(float(value) < 0 for value in row):
+            raise ValueError("La matriz de costo no puede contener valores negativos")
+    if any(float(value) < 0 for value in sim["neighborhood_weights"]):
+        raise ValueError("Los pesos de vecindad no pueden ser negativos")
+    if int(sim["neighborhood_size"]) < 1 or int(sim["neighborhood_size"]) % 2 == 0:
+        raise ValueError("simulation.neighborhood_size debe ser impar y >= 1")
+    if int(sim["max_iterations"]) < 1:
+        raise ValueError("simulation.max_iterations debe ser >= 1")
+    if float(sim["acceleration"]) < 0:
+        raise ValueError("simulation.acceleration debe ser >= 0")
+    if "demand_schedule" in sim and sim["demand_schedule"]:
+        for item in sim["demand_schedule"]:
+            if "period" not in item or len(item.get("future_pixels", [])) != n_types:
+                raise ValueError("Cada elemento de demand_schedule requiere period y n_types valores.")
+    darea = cfg.get("hyperparameters", {}).get("darea", {})
+    if darea.get("enabled", False) and not 1 <= int(darea.get("target_class", 2)) <= n_types:
+        raise ValueError("hyperparameters.darea.target_class debe estar entre 1 y n_types")
 
 
 def config_from_gui_logs(
@@ -151,7 +171,7 @@ def config_from_gui_logs(
             "stop_tolerance_fraction": 0.0001,
             "stable_iterations": 5,
             "darea": {
-                "enabled": True,
+                "enabled": False,
                 "restricted_value": 2,
                 "target_class": 2,
             },

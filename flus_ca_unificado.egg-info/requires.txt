@@ -1,0 +1,8 @@
+numpy
+rasterio
+numba
+pandas
+pyyaml
+
+[test]
+pytest

@@ -35,6 +35,14 @@ simulation:
     - 685826
     - 135937
 
+  # Opcional. Si se define, reemplaza future_pixels y ejecuta los horizontes
+  # consecutivamente, reiniciando la inercia en cada período.
+  # demand_schedule:
+  #   - period: 2025
+  #     future_pixels: [475690,1821742,5774667,1843641,537343,115169,3419315,3370565,685826,135937]
+  #   - period: 2030
+  #     future_pixels: [475690,1821742,5774667,1843641,537343,115169,3419315,3370565,685826,135937]
+
   cost_matrix:
     - [1,1,0,0,0,1,0,0,0,0]
     - [1,1,0,0,0,1,0,0,0,1]
@@ -49,7 +57,7 @@ simulation:
 
   neighborhood_weights: [0.5,0.5,1,0.5,0.5,0.5,0.5,0.5,0.5,0.5]
 
-  max_iterations: 3
+  max_iterations: 500
   neighborhood_size: 5
   acceleration: 2
   enclaves_for_landuse_type: 1
@@ -60,10 +68,10 @@ hyperparameters:
   stop_tolerance_fraction: 0.0001
   stable_iterations: 5
 
-  # Política especial del código FLUS cuando el raster restricted contiene valor 2.
-  # Si no la usas, poner enabled: false.
+  # Variante opcional DAREA. El FLUS_console suministrado no fue compilado con
+  # esta variante, por eso se mantiene desactivada para reproducirlo.
   darea:
-    enabled: true
+    enabled: false
     restricted_value: 2
     target_class: 2
 

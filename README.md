@@ -1,74 +1,90 @@
-# pyflus-ca
+# pyflus-corregido 0.3.0
 
-Python implementation of the cellular automata (CA)-based self-adaptive inertia and competition mechanism module of the land-use simulation model (FLUS; Liu et al., 2017): a model for future land-use allocation. The source code is available at: https://geosimulation.cn/FLUS-source-code.html
+Implementación Python del módulo de autómata celular (CA) de `FLUS_console`.
+Consume un mapa inicial y un GeoTIFF multibanda de probabilidades de ocurrencia.
+No entrena la red neuronal original de `nntrain.cpp`; las probabilidades pueden
+provenir de FLUS, FT-Transformer u otro modelo de idoneidad.
 
-This repository provides a research-oriented Python workflow to run land-use change simulations without opening the GeoSOS-FLUS graphical interface.
+## Correcciones de esta versión
 
-The model reads:
+- DAREA está desactivado por defecto, igual que en el proyecto Visual C++ entregado.
+- Criterio de parada alineado con `simulationprocess.cpp`.
+- Verificación de CRS, transformación, dimensiones y número de bandas.
+- Validación de códigos contiguos `1..n_types`, matrices y vecindad impar.
+- Rechazo de probabilidades negativas, NaN o infinitas.
+- Control real del número de hilos de Numba mediante `simulation.thread`.
+- Demanda multihorizonte opcional mediante `simulation.demand_schedule`.
+- Registro del período en el CSV de historia.
+- DAREA permanece disponible como variante explícita.
 
-- initial land-use raster;
-- probability-of-occurrence raster;
-- restricted-area raster;
-- future land-use demand;
-- conversion / cost matrix;
-- neighborhood weights;
-- CA simulation parameters;
-- output path.
+Los resultados no serán idénticos píxel a píxel al C++ porque NumPy/Numba y
+`rand()` usan generadores aleatorios diferentes. Sí se conserva la estructura
+algorítmica: idoneidad, vecindad, inercia adaptativa, matriz de conversión,
+ruleta y control de demanda.
 
-## Important note
+`enclaves_for_landuse_type` se conserva para compatibilidad con los logs, pero
+el `simulationprocess.cpp` suministrado tampoco lo usa en la asignación CA.
 
-This is **not an official GeoSOS-FLUS release**.
+## Instalación
 
-This implementation is inspired by the FLUS CA simulation workflow and by inspection of the original FLUS CA source-code structure. It is intended for research, experimentation, reproducibility, and batch simulations.
-
-It does **not** implement the ANN probability-of-occurrence module. Therefore, the probability raster must already exist before running the CA simulation.
-
-Because the original FLUS implementation uses C++ and its own random process, this Python version should not be expected to reproduce GeoSOS-FLUS outputs pixel-by-pixel. The recommended validation is to compare:
-
-- final class counts;
-- changed pixels;
-- transition matrix;
-- spatial agreement against a reference raster, if available.
-
-## Methodological basis
-
-The implementation follows the structure of the GeoSOS-FLUS self-adaptive inertia and competition mechanism CA module. In the original FLUS workflow, the CA module uses:
-
-- land-use pattern;
-- probability-of-occurrence data;
-- restricted-area data;
-- future land-use demand;
-- cost / conversion matrix;
-- neighborhood weights;
-- maximum number of iterations;
-- neighborhood size;
-- acceleration factor.
-
-The original GeoSOS-FLUS model is described in:
-
-```text
-Liu, X., Liang, X., Li, X., Xu, X., Ou, J., Chen, Y., Li, S., Wang, S., & Pei, F. (2017).
-A future land use simulation model (FLUS) for simulating multiple land use scenarios
-by coupling human and natural effects.
-Landscape and Urban Planning, 168, 94–116.
-```
-Furthermore, this Python implementation was used for the following publication:
-```text
-Herrera-Benavides, J., Galleguillos, M., & O’Ryan, R. (2026). A spatial simulation framework for afforestation policy assessment in Chile: accounting for uncertainty in projected land-use change and hydrological risk. Research Square. https://doi.org/10.21203/rs.3.rs-9520764/v1
+```powershell
+cd C:\ruta\a\pyflus_corregido
+python -m pip install -e .
 ```
 
-## License
+Para instalar y ejecutar las pruebas:
 
-This project is licensed under the MIT License.
+```powershell
+python -m pip install -e ".[test]"
+pytest -q
+```
 
-Copyright (c) 2026 Jorge Herrera-Benavides.
+## Uso
 
-You are free to use, copy, modify, and distribute this software, provided that the original copyright notice and license are included.
+Copie `flus_config_template.yml`, edite rutas, demanda, matriz y pesos, y ejecute:
 
-## How to cite
+```powershell
+flus-ca inspect --config C:\ruta\flus_config.yml
+flus-ca run --config C:\ruta\flus_config.yml
+```
 
-If you use this repository, please cite it as:
+También funciona sin el comando instalado:
 
-Herrera-Benavides, J. (2026). *pyflus-ca: A Python implementation of a FLUS-CA module for land-use change simulation* (Version 0.2.0) [Computer software]. GitHub. https://github.com/jorge-herrera-b/pyflus-ca
+```powershell
+python -m flus_ca.cli run --config C:\ruta\flus_config.yml
+```
 
-A machine-readable citation file is also provided in `CITATION.cff`.
+## Bandas de probabilidades
+
+El GeoTIFF debe contener exactamente `n_types` bandas. La banda 1 corresponde
+a la clase 1, la banda 2 a la clase 2, y así sucesivamente. Todos los rásteres
+deben compartir la misma grilla geoespacial.
+
+## Demanda multihorizonte
+
+Si `demand_schedule` existe y no está vacío, reemplaza `future_pixels`:
+
+```yaml
+simulation:
+  demand_schedule:
+    - period: 2025
+      future_pixels: [1000, 2000, 3000]
+    - period: 2030
+      future_pixels: [900, 2100, 3000]
+```
+
+Cada horizonte parte del mapa obtenido en el anterior y reinicia la inercia.
+Se usa `seed + índice_del_período` para que la ejecución sea reproducible.
+
+## DAREA
+
+El proyecto `FLUS_console.vcxproj` revisado no define la macro `DAREA`; use:
+
+```yaml
+hyperparameters:
+  darea:
+    enabled: false
+```
+
+Actívela solamente si desea la variante que favorece una clase objetivo cuando
+el ráster restringido contiene un valor especial.
