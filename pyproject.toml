@@ -3,9 +3,9 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "flus-ca-unificado"
+name = "flus-ca"
 version = "0.3.0"
-description = "Modulo CA de FLUS en Python usando un archivo YAML unico de configuracion"
+description = "Python implementation of the FLUS cellular automata land-use allocation model"
 requires-python = ">=3.9"
 dependencies = [
     "numpy",
